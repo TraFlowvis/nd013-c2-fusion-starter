@@ -1,0 +1,4 @@
+/dataset/*
+/results/*
+*.pth
+*.pyc
