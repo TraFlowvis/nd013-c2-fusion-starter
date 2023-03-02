@@ -218,7 +218,7 @@ def project_detections_into_bev(bev_map, detections, configs, color=[]):
         bev_corners = np.zeros((4, 2), dtype=np.float32)
         cos_yaw = np.cos(yaw)
         sin_yaw = np.sin(yaw)
-        bev_corners[0, 0] = x - w / 2 * cos_yaw - l / 2 * sin_yaw # front left
+        bev_corners[0, 0 ] = x - w / 2 * cos_yaw - l / 2 * sin_yaw # front left
         bev_corners[0, 1] = y - w / 2 * sin_yaw + l / 2 * cos_yaw 
         bev_corners[1, 0] = x - w / 2 * cos_yaw + l / 2 * sin_yaw # rear left
         bev_corners[1, 1] = y - w / 2 * sin_yaw - l / 2 * cos_yaw
@@ -232,7 +232,8 @@ def project_detections_into_bev(bev_map, detections, configs, color=[]):
         cv2.polylines(bev_map, [corners_int], True, color, 2)
 
         # draw colored line to identify object front
-        corners_int = bev_corners.reshape(-1, 2)
+        corners_int = bev_corners.reshape(-1, 2).astype(int)
+        # cv2.line(bev_map, (round(corners_int[0, 0]), round(corners_int[0, 1])), (round(corners_int[3, 0]), round(corners_int[3, 1])), (255, 255, 0), 2)
         cv2.line(bev_map, (corners_int[0, 0], corners_int[0, 1]), (corners_int[3, 0], corners_int[3, 1]), (255, 255, 0), 2)
 
 
