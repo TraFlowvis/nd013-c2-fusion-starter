@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import torch
 from shapely.geometry import Polygon
 from operator import itemgetter
+import misc.objdet_tools as tools 
 
 # add project directory to python path to enable relative imports
 import os
@@ -29,6 +30,11 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 # object detection tools and helper functions
 import misc.objdet_tools as tools
+
+def IOU(box1,box2):
+    x1, y1, x2, y2 = box1
+    x3, y3, x4, y4 = box1
+    
 
 
 # compute various performance measures to assess object detection
@@ -49,16 +55,31 @@ def measure_detection_performance(detections, labels, labels_valid, min_iou=0.5)
             print("student task ID_S4_EX1 ")
 
             ## step 1 : extract the four corners of the current label bounding-box
-            
+            box = label.box
+            meta = label.metadata
+            center_x, center_y, center_z, w, l, h, yaw = box.center_x, box.center_y, box.center_z, box.width, box.length, box.height, box.heading
+            label_box_corners =  tools.compute_box_corners(center_x,center_y,w,l,yaw)
             ## step 2 : loop over all detected objects
-
+            for obj in detections:
                 ## step 3 : extract the four corners of the current detection
-                
+                obj_id, det_x, det_y, det_z, det_h, det_w, det_l, det_yaw = obj
+                obj_corners = tools.compute_box_corners(det_x,det_y,det_w,det_l,det_yaw)
                 ## step 4 : computer the center distance between label and detection bounding-box in x, y, and z
+                dist_x = np.array(box.center_x - det_x).item()
+                dist_y = np.array(box.center_y - det_y).item()
+                dist_z = np.array(box.center_z - det_z).item()
                 
                 ## step 5 : compute the intersection over union (IOU) between label and detection bounding-box
+                poly_label = Polygon(label_box_corners)
+                poly_obj = Polygon(obj_corners)
+                intersect = poly_label.intersection(poly_obj).area
+                union = poly_label.union(poly_obj).area
+                iou = intersect / union
                 
                 ## step 6 : if IOU exceeds min_iou threshold, store [iou,dist_x, dist_y, dist_z] in matches_lab_det and increase the TP count
+                if iou > min_iou:
+                    matches_lab_det.append([iou,dist_x,dist_y,dist_z])
+                    true_positives += 1
                 
             #######
             ####### ID_S4_EX1 END #######     
@@ -77,13 +98,13 @@ def measure_detection_performance(detections, labels, labels_valid, min_iou=0.5)
     # compute positives and negatives for precision/recall
     
     ## step 1 : compute the total number of positives present in the scene
-    all_positives = 0
+    all_positives = labels_valid.sum()
 
     ## step 2 : compute the number of false negatives
-    false_negatives = 0
+    false_negatives = all_positives - true_positives
 
     ## step 3 : compute the number of false positives
-    false_positives = 0
+    false_positives = len(detections) - true_positives
     
     #######
     ####### ID_S4_EX2 END #######     
@@ -95,7 +116,7 @@ def measure_detection_performance(detections, labels, labels_valid, min_iou=0.5)
 
 
 # evaluate object detection performance based on all frames
-def compute_performance_stats(det_performance_all):
+def compute_performance_stats(det_performance_all,configs):
 
     # extract elements
     ious = []
@@ -111,12 +132,14 @@ def compute_performance_stats(det_performance_all):
     print('student task ID_S4_EX3')
 
     ## step 1 : extract the total number of positives, true positives, false negatives and false positives
+    positives, true_positives, false_negatives, false_positives = np.asarray(pos_negs).sum(axis=0)
+
     
     ## step 2 : compute precision
-    precision = 0.0
+    precision = true_positives/float(true_positives + false_positives)
 
     ## step 3 : compute recall 
-    recall = 0.0
+    recall = true_positives/float(true_positives+false_negatives)
 
     #######    
     ####### ID_S4_EX3 END #######     

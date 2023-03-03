@@ -58,6 +58,7 @@ def load_configs_model(model_name='darknet', configs=None):
         configs.num_workers = 4
         configs.pin_memory = True
         configs.use_giou_loss = False
+        configs.min_iou = 0.5
         
         # Number of convolution model layers
         configs.num_layers = 18

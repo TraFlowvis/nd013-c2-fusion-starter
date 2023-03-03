@@ -367,7 +367,7 @@ def show_objects_labels_in_bev(detections, object_labels, bev_maps, configs):
     # project detections and labels into birds-eye view
     bev_map = (bev_maps.squeeze().permute(1, 2, 0).numpy() * 255).astype(np.uint8)
     bev_map = cv2.resize(bev_map, (configs.bev_width, configs.bev_height))
-    
+     
     label_detections = convert_labels_into_objects(object_labels, configs)
     project_detections_into_bev(bev_map, label_detections, configs, [0,255,0])
     project_detections_into_bev(bev_map, detections, configs, [0,0,255])
