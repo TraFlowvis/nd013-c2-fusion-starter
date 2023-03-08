@@ -1,6 +1,6 @@
 # Writeup Midterm
 
-### Step 1 PointCould findings
+## Step 1 Part 2 PointCould findings
 
 #### __Find and display 6 examples of vehicles with varying degrees of visibility in the point-cloud__
 
@@ -32,14 +32,6 @@ Vehicle 6
 - Height, depth and width of the vehicle can be used for the cassification (keeping diffent vehicle types in mind)
 - wheels can often be identified if the view sees a bit of the carside
 - often smaller gradient in heigt on the front of the car (windschield and )
-
-### Step2
-
-
-### Step3
-
-
-### Step 4
 
 
 # Writeup: Track 3D-Objects Over Time

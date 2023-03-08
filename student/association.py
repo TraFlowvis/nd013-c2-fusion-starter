@@ -30,7 +30,7 @@ class Association:
         self.unassigned_tracks = []
         self.unassigned_meas = []
         
-    def associate(self, track_list, meas_list, KF):
+    def associate(self,track_list, meas_list, KF):
              
         ############
         # TODO Step 3: association:
@@ -39,16 +39,24 @@ class Association:
         ############
         
         # the following only works for at most one track and one measurement
-        self.association_matrix = np.matrix([]) # reset matrix
-        self.unassigned_tracks = [] # reset lists
-        self.unassigned_meas = []
+        len_track = len(track_list)
+        len_meas = len(meas_list)
+        self.unassigned_tracks = list(range(len_track))
+        self.unassigned_meas = list(range(len_meas))
+        self.association_matrix = np.asmatrix(np.inf * np.ones((len_track, len_meas)))
         
-        if len(meas_list) > 0:
-            self.unassigned_meas = [0]
-        if len(track_list) > 0:
-            self.unassigned_tracks = [0]
-        if len(meas_list) > 0 and len(track_list) > 0: 
-            self.association_matrix = np.matrix([[0]])
+        # if len(meas_list) > 0:
+        #     self.unassigned_meas = [0]
+        # if len(track_list) > 0:
+        #     self.unassigned_tracks = [0]
+        # if len(meas_list) > 0 and len(track_list) > 0: 
+        #     self.association_matrix = np.matrix([[0]])
+            
+        for i, track in enumerate(track_list):
+            for j, meas in enumerate(meas_list):
+                dist = self.MHD(track,meas,KF)
+                if self.gating(dist,meas.sensor):
+                    self.association_matrix[i,j] = dist
         
         ############
         # END student code
@@ -62,15 +70,29 @@ class Association:
         # - remove corresponding track and measurement from unassigned_tracks and unassigned_meas
         # - return this track and measurement
         ############
-
-        # the following only works for at most one track and one measurement
-        update_track = 0
-        update_meas = 0
+        if np.min(self.association_matrix) == np.inf:
+            return np.nan, np.nan
+        # - find indices of closest track and measurement for next update
+        num_track, num_meas = np.unravel_index(np.argmin(self.association_matrix, axis=None), self.association_matrix.shape)
+        # - delete row and column in association matrix for closest track and measurement
+        self.association_matrix = np.delete(self.association_matrix, num_track, axis=0)
+        self.association_matrix = np.delete(self.association_matrix, num_meas, axis=1)
         
-        # remove from list
-        self.unassigned_tracks.remove(update_track) 
+        # - remove found track number from unassigned_tracks, meas number from unassigned_meas
+        update_track = self.unassigned_tracks[num_track]
+        update_meas = self.unassigned_meas[num_meas]
+        self.unassigned_tracks.remove(update_track)
         self.unassigned_meas.remove(update_meas)
-        self.association_matrix = np.matrix([])
+
+        # # the following only works for at most one track and one measurement
+        # update_track = 0
+        # update_meas = 0
+        
+        # # remove from list
+        # self.unassigned_tracks.remove(update_track) 
+        # self.unassigned_meas.remove(update_meas)
+        # self.association_matrix = np.matrix([])
+        
             
         ############
         # END student code
@@ -81,8 +103,10 @@ class Association:
         ############
         # TODO Step 3: return True if measurement lies inside gate, otherwise False
         ############
-        
-        pass    
+        if MHD < chi2.ppf(params.gating_threshold, sensor.dim_meas):
+            return True
+        else:
+            return False 
         
         ############
         # END student code
@@ -92,8 +116,14 @@ class Association:
         ############
         # TODO Step 3: calculate and return Mahalanobis distance
         ############
+        # Lidar Mesuremnt Matrix
+        H = meas.sensor.get_H(track.x)
         
-        pass
+        gamma = KF.gamma(track, meas)
+        S = KF.S(track, meas,H)
+        d = gamma.transpose() * np.linalg.inv(S) * gamma
+        
+        return d
         
         ############
         # END student code
